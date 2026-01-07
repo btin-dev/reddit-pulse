@@ -46,8 +46,23 @@ export async function POST(req) {
     const sub = subreddit ? `r/${subreddit.replace(/^r\//,'')}/` : '';
     const url = `https://www.reddit.com/${sub}search.json?q=${encodeURIComponent(query)}&sort=relevance&t=${timeframe}&limit=100&raw_json=1`;
     
-    const res = await fetch(url, { headers: { 'User-Agent': 'RedditPulse/1.0' } });
-    if (!res.ok) return Response.json({ error: `Reddit error: ${res.status}` }, { status: res.status });
+    const res = await fetch(url, { 
+      headers: { 
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Connection': 'keep-alive',
+        'Upgrade-Insecure-Requests': '1',
+        'Cache-Control': 'max-age=0'
+      } 
+    });
+    
+    if (!res.ok) {
+      const text = await res.text();
+      console.error('Reddit error:', res.status, text);
+      return Response.json({ error: `Reddit error: ${res.status}` }, { status: res.status });
+    }
     
     const data = await res.json();
     const posts = data?.data?.children || [];
@@ -98,6 +113,7 @@ export async function POST(req) {
       }
     });
   } catch (e) {
+    console.error('API error:', e);
     return Response.json({ error: e.message }, { status: 500 });
   }
 }
